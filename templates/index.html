@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Estratificação de Risco</title>
+    <!-- Carrega o arquivo CSS a partir da pasta 'static/css' -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Biblioteca Plotly para gerar o gráfico gauge -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Estratificação de Risco de Falha de Extubação em Neonatologia</h1>
+
+        <!-- Formulário de exemplo para inserir dados -->
+        <form id="risk-form">
+            <label for="gestational_age">Idade Gestacional (semanas):</label>
+            <input type="number" id="gestational_age" name="gestational_age" step="0.1" value="32"><br><br>
+
+            <label for="weight">Peso ao nascer (g):</label>
+            <input type="number" id="weight" name="weight" value="2000"><br><br>
+
+            <label for="hours_vmi">Horas em Ventilação Mecânica:</label>
+            <input type="number" id="hours_vmi" name="hours_vmi" value="50"><br><br>
+
+            <label for="last_fio2">Última FiO₂ (0.21 a 1.0):</label>
+            <input type="number" id="last_fio2" name="last_fio2" step="0.01" value="0.3"><br><br>
+
+            <label for="peep">PEEP (cmH₂O):</label>
+            <input type="number" id="peep" name="peep" step="0.1" value="5"><br><br>
+
+            <label for="map_value">MAP (cmH₂O):</label>
+            <input type="number" id="map_value" name="map_value" step="0.1" value="8"><br><br>
+
+            <label for="spO2">SpO₂ pré-extubação (%):</label>
+            <input type="number" id="spO2" name="spO2" step="0.1" value="95"><br><br>
+
+            <label for="cafeina">Cafeína (1 = Sim, 0 = Não):</label>
+            <input type="number" id="cafeina" name="cafeina" min="0" max="1" value="1"><br><br>
+
+            <label for="atb">Antibióticos (1 = Sim, 0 = Não):</label>
+            <input type="number" id="atb" name="atb" min="0" max="1" value="0"><br><br>
+
+            <label for="cpap">CPAP/VNI pós-extubação (1 = Sim, 0 = Não):</label>
+            <input type="number" id="cpap" name="cpap" min="0" max="1" value="1"><br><br>
+
+            <button type="button" onclick="calculateRisk()">Calcular Risco</button>
+        </form>
+
+        <!-- Div onde o gráfico será exibido -->
+        <div id="gauge"></div>
+    </div>
+
+    <script>
+        function calculateRisk() {
+            const data = {
+                gestational_age: parseFloat(document.getElementById('gestational_age').value),
+                weight: parseFloat(document.getElementById('weight').value),
+                hours_vmi: parseFloat(document.getElementById('hours_vmi').value),
+                last_fio2: parseFloat(document.getElementById('last_fio2').value),
+                peep: parseFloat(document.getElementById('peep').value),
+                map_value: parseFloat(document.getElementById('map_value').value),
+                spO2: parseFloat(document.getElementById('spO2').value),
+                cafeina: parseInt(document.getElementById('cafeina').value),
+                atb: parseInt(document.getElementById('atb').value),
+                cpap: parseInt(document.getElementById('cpap').value)
+            };
+
+            // Faz requisição POST para /predict, enviando os dados em formato JSON
+            fetch('/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                // Converte a string JSON para objeto Plotly
+                const graph = JSON.parse(result.graphJSON);
+                // Renderiza o gráfico gauge na div 'gauge'
+                Plotly.newPlot('gauge', graph.data, graph.layout);
+            })
+            .catch(error => console.error('Erro:', error));
+        }
+    </script>
+</body>
+</html>
